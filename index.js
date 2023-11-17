@@ -2,6 +2,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const express = require("express");
 const app = express();
 const cors = require("cors");
+var jwt = require("jsonwebtoken");
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 
@@ -80,14 +81,24 @@ async function run() {
       const user = req.body;
       // insert email if user doesn't exists:
       // you can do this many ways (1. email unique, 2. upsert 3. simple checking)
-
       const query = { email: user.email };
       const existingUser = await userCollection.findOne(query);
       if (existingUser) {
         return res.send({ message: "user already exists", insertedId: null });
       }
-
       const result = await userCollection.insertOne(user);
+      res.send(result);
+    });
+
+    app.patch("/users/admin/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          role: "admin",
+        },
+      };
+      const result = await userCollection.updateOne(filter, updatedDoc);
       res.send(result);
     });
 
