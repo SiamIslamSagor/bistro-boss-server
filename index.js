@@ -30,6 +30,7 @@ async function run() {
     const menuCollection = client.db("bistroBossDb").collection("menu");
     const reviewCollection = client.db("bistroBossDb").collection("reviews");
     const cartCollection = client.db("bistroBossDb").collection("carts");
+    const userCollection = client.db("bistroBossDb").collection("users");
 
     ////////////////////////////////////////////
     ////////////    API  ///////////////////////
@@ -63,6 +64,14 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await cartCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    // users related api
+
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      const result = await userCollection.insertOne(user);
       res.send(result);
     });
 
