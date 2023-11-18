@@ -36,6 +36,22 @@ async function run() {
     ////////////////////////////////////////////
     ////////////    API  ///////////////////////
 
+    // jwt related api
+
+    app.post("/jwt", async (req, res) => {
+      // jwt sign want 3 things
+      /**
+       * 1. payload or data or info. what you set in token
+       * 2. secret. to generate token=> cmd ==> node ==> require('crypto').randomBytes(64).toString('hex')
+       * 3. expire date. how long time the token are valid or not (expiresIn)
+       */
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "1h",
+      });
+      res.send({ token });
+    });
+
     // menu related api
 
     app.get("/menu", async (req, res) => {
