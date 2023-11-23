@@ -33,6 +33,7 @@ async function run() {
     const reviewCollection = client.db("bistroBossDb").collection("reviews");
     const cartCollection = client.db("bistroBossDb").collection("carts");
     const userCollection = client.db("bistroBossDb").collection("users");
+    const paymentCollection = client.db("bistroBossDb").collection("payments");
 
     ////////////////////////////////////////////
     ////////////    API  ///////////////////////
@@ -215,10 +216,11 @@ async function run() {
     // payment intent
     app.post("/create-payment-intent", async (req, res) => {
       const { price } = req.body;
-      const amount = parseInt(price * 100);
+      const totalAmount = parseInt(price * 100);
+      console.log(totalAmount);
 
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: amount,
+        amount: totalAmount,
         currency: "usd",
         payment_method_types: ["card"],
       });
@@ -226,6 +228,24 @@ async function run() {
       res.send({
         clientSecret: paymentIntent.client_secret,
       });
+    });
+
+    app.post("/payments", async (req, res) => {
+      const payment = req.body;
+      const paymentResult = await paymentCollection.insertOne(payment);
+
+      // carefully delete each item from the cart
+      console.log("payment info", payment);
+      const query = {
+        _id: {
+          $in: payment.cartIds.map(cardId => new ObjectId(cardId)),
+        },
+      };
+      console.log(query);
+
+      const deletedResult = await cartCollection.deleteMany(query);
+
+      res.send({ paymentResult, deletedResult });
     });
 
     ////////////////////////////////////////////
