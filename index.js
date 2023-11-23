@@ -296,6 +296,53 @@ async function run() {
      *
      */
 
+    // using aggregate pipeline
+    app.get("/order-stats", verifyToken, verifyAdmin, async (req, res) => {
+      const result = await paymentCollection
+        .aggregate([
+          {
+            $addFields: {
+              menuItemsObjectIds: {
+                $map: {
+                  input: "$menuItemIds",
+                  as: "itemId",
+                  in: { $toObjectId: "$$itemId" },
+                },
+              },
+            },
+          },
+          {
+            $lookup: {
+              from: "menu",
+              localField: "menuItemsObjectIds",
+              foreignField: "_id",
+              as: "menuItems",
+            },
+          },
+          {
+            $unwind: "$menuItems",
+          },
+          {
+            $group: {
+              _id: "$menuItems.category",
+              quantity: { $sum: 1 },
+              revenue: { $sum: "$menuItems.price" },
+            },
+          },
+          {
+            $project: {
+              _id: 0,
+              category: "$_id",
+              quantity: "$quantity",
+              revenue: "$revenue",
+            },
+          },
+        ])
+        .toArray();
+
+      res.send(result);
+    });
+
     ////////////////////////////////////////////
 
     // Send a ping to confirm a successful connection
